@@ -56,10 +56,16 @@ export class Erc20Service extends EvmService {
     return totalSupply as bigint;
   }
 
-  async getTokenBalance(chainId: number, contractAccountAddress: `0x${string}`, eoaAddress: string): Promise<bigint> {
+  async getBalanceOfRaw(chainId: number, contractAccountAddress: `0x${string}`, eoaAddress: string): Promise<bigint> {
     const balance = await this.readContract(chainId, contractAccountAddress, 'balanceOf', ERC20_ABI as Abi, {
       args: [eoaAddress],
     });
     return balance as bigint;
+  }
+
+  async getBalanceOf(chainId: number, contractAccountAddress: `0x${string}`, eoaAddress: string): Promise<{ balanceRaw: bigint, balance: number }> {
+    const decimals = await this.getDecimals(chainId, contractAccountAddress);
+    const balance = await this.getBalanceOfRaw(chainId, contractAccountAddress, eoaAddress);
+    return { balanceRaw: balance, balance: +formatUnits(balance, decimals) };
   }
 }

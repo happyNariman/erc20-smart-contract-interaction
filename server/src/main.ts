@@ -5,6 +5,10 @@ import { promises } from 'fs';
 import { join } from 'path';
 import { Logger } from '@nestjs/common';
 
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

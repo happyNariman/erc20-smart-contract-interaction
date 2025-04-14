@@ -18,9 +18,10 @@ export class TokenService extends EvmService {
 
   async get(chainId: number, tokenAddress: `0x${string}`): Promise<TokenDto> {
     const erc20 = await this.erc20Service.get(chainId, tokenAddress);
+    const token = new TokenDto(erc20);
 
-    // get dollar value
+    token.dollarValue = 0; // TODO: implement this, get dollar value
 
-    throw new Error('Method not implemented.');
+    return token;
   }
 }
