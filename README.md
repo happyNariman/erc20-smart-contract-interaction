@@ -50,4 +50,5 @@ For example, you can execute the `/api/tokens/{chain}/{address}/erc20` endpoint 
 ## 3. Transfer ERC20 token
 
 3.1. Before running the `transfer` endpoint, you should run `approve` endpoint to approve the transfer of tokens to sender.
+
 3.2. After that, you can run the `transfer` endpoint to transfer the tokens from the sender to the receiver.
