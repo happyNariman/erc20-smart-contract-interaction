@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "deploy": "npx hardhat run scripts/deploy.ts --network localhost",
     "node": "npx hardhat node",
+    "deploy": "npx hardhat run scripts/deploy.ts --network localhost",
     "compile": "npx hardhat compile",
     "test": "npx hardhat test"
   },
@@ -10,7 +10,7 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
-    "dotenv": "^16.4.7",
-    "hardhat": "^2.22.19"
+    "dotenv": "^16.5.0",
+    "hardhat": "^2.23.0"
   }
 }

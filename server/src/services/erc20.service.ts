@@ -4,7 +4,7 @@ import { Abi, formatUnits, isAddress } from 'viem';
 
 import * as ERC20_ABI from 'api/assets/erc20.abi.json';
 import { EvmService } from './evm.service';
-import { Erc20Dto } from 'api/dto';
+import { Erc20Dto, TokenBalanceDto } from 'api/dto';
 
 @Injectable()
 export class Erc20Service extends EvmService {
@@ -63,9 +63,72 @@ export class Erc20Service extends EvmService {
     return balance as bigint;
   }
 
-  async getBalanceOf(chainId: number, contractAccountAddress: `0x${string}`, eoaAddress: string): Promise<{ balanceRaw: bigint, balance: number }> {
+  async getBalanceOf(chainId: number, contractAccountAddress: `0x${string}`, eoaAddress: string): Promise<TokenBalanceDto> {
     const decimals = await this.getDecimals(chainId, contractAccountAddress);
     const balance = await this.getBalanceOfRaw(chainId, contractAccountAddress, eoaAddress);
     return { balanceRaw: balance, balance: +formatUnits(balance, decimals) };
+  }
+
+  async getAllowanceRaw(
+    chainId: number,
+    contractAccountAddress: `0x${string}`,
+    owner: `0x${string}`,
+    spender: `0x${string}`,
+  ): Promise<bigint> {
+    const allowance = await this.readContract(chainId, contractAccountAddress, 'allowance', ERC20_ABI as Abi, {
+      args: [owner, spender],
+    });
+    return allowance as bigint;
+  }
+
+  async getAllowance(
+    chainId: number,
+    contractAccountAddress: `0x${string}`,
+    owner: `0x${string}`,
+    spender: `0x${string}`,
+  ): Promise<TokenBalanceDto> {
+    const decimals = await this.getDecimals(chainId, contractAccountAddress);
+    const allowance = await this.getAllowanceRaw(chainId, contractAccountAddress, owner, spender);
+    return { balanceRaw: allowance as bigint, balance: +formatUnits(allowance, decimals) };
+  }
+
+  async approve(
+    chainId: number,
+    contractAccountAddress: `0x${string}`,
+    spender: `0x${string}`,
+    amount: bigint,
+    privateKey: `0x${string}`,
+  ): Promise<{ txHash: `0x${string}` }> {
+    amount = BigInt(amount);
+    if (amount <= 0) throw new BadRequestException('Amount must be greater than 0');
+
+    const txHash = await this.writeContract(chainId, contractAccountAddress, 'approve', ERC20_ABI as Abi, {
+      args: [spender, amount],
+      privateKey,
+    });
+
+    return { txHash };
+  }
+
+  async transfer(
+    chainId: number,
+    contractAccountAddress: `0x${string}`,
+    from: `0x${string}`,
+    to: `0x${string}`,
+    amount: bigint,
+    privateKey: `0x${string}`,
+  ): Promise<{ txHash: `0x${string}` }> {
+    amount = BigInt(amount);
+    if (amount <= 0) throw new BadRequestException('Amount must be greater than 0');
+
+    const allowance = await this.getAllowanceRaw(chainId, contractAccountAddress, from, to);
+    if (allowance === 0n || allowance < amount) throw new BadRequestException('Allowance is not enough');
+
+    const txHash = await this.writeContract(chainId, contractAccountAddress, 'transferFrom', ERC20_ABI as Abi, {
+      args: [from, to, amount],
+      privateKey,
+    });
+
+    return { txHash };
   }
 }

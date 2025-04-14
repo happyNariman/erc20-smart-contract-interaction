@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Abi, Account, Address, Chain, createPublicClient, createWalletClient, http, isAddress, Prettify, PublicClient } from 'viem';
-import { localhost } from 'viem/chains';
+import { privateKeyToAccount } from 'viem/accounts';
+import { hardhat } from 'viem/chains';
 
 @Injectable()
 export abstract class EvmService {
@@ -10,7 +11,7 @@ export abstract class EvmService {
   } = {};
 
   constructor(protected configService: ConfigService) {
-    this.addPublicClient(localhost, this.configService.get<string>('RPC_ENDPOINT_LOCALHOST')!);
+    this.addPublicClient(hardhat, this.configService.get<string>('RPC_ENDPOINT_LOCALHOST')!);
   }
 
   protected addPublicClient(chain: Chain, rpcUrl: string) {
@@ -62,21 +63,20 @@ export abstract class EvmService {
     abi: Abi,
     options: {
       args?: unknown[];
-      account: `0x${string}`;
+      privateKey: `0x${string}`;
     },
   ) {
     if (!isAddress(address)) throw new BadRequestException('Invalid or missing contract address.');
     if (!functionName) throw new BadRequestException('Function name must be provided.');
-    if (!options?.account) throw new BadRequestException('Account (signer) is required for writing');
+    if (!options?.privateKey) throw new BadRequestException('Private key is required for writing');
 
     const publicClient = this.getPublicClient(chainId);
 
-    console.log('publicClient.transport', publicClient.transport);
-
+    const account = privateKeyToAccount(options.privateKey);
     const walletClient = createWalletClient({
-      account: options.account,
+      account,
       chain: publicClient.chain,
-      transport: http(publicClient.transport.name),
+      transport: http(publicClient.transport.url),
     });
 
     return walletClient.writeContract({
@@ -84,8 +84,8 @@ export abstract class EvmService {
       abi,
       functionName,
       args: options.args,
-      account: options.account,
       chain: publicClient.chain,
+      account: publicClient.account,
     });
   }
 }
