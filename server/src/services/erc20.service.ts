@@ -121,7 +121,7 @@ export class Erc20Service extends EvmService {
     amount = BigInt(amount);
     if (amount <= 0) throw new BadRequestException('Amount must be greater than 0');
 
-    const allowance = await this.getAllowanceRaw(chainId, contractAccountAddress, from, to);
+    const allowance = await this.getAllowanceRaw(chainId, contractAccountAddress, from, from);
     if (allowance === 0n || allowance < amount) throw new BadRequestException('Allowance is not enough');
 
     const txHash = await this.writeContract(chainId, contractAccountAddress, 'transferFrom', ERC20_ABI as Abi, {
